@@ -1,0 +1,23 @@
+業務請款 PWA 安裝說明
+====================
+
+一、上傳到 GitHub（建議專案名稱：sales-claim）
+  1. github.com 右上「＋」→ New repository → 名稱填 sales-claim → 選 Public → Create repository
+  2. 點「uploading an existing file」，把這個資料夾「裡面」的所有東西拖進去（不是拖整個資料夾）
+  3. 拉到最下面按 Commit changes，確認首頁直接看得到 index.html
+  4. Settings → Pages → Branch 選 main、/ (root) → Save
+  5. 等 1～3 分鐘，回到 Settings → Pages 頁面最上方，會看到網址：
+     https://你的帳號.github.io/sales-claim/
+
+二、加入主畫面
+  iPhone：用 Safari 打開網址 → 分享 → 加入主畫面
+  Android：用 Chrome 打開 → 選單 → 安裝應用程式
+  電腦：Chrome 或 Edge 網址列右邊的「安裝」圖示
+
+三、更新
+  進同一個專案 → Add file → Upload files → 拖入新版資料夾裡的內容 → Commit changes
+  並把 sw.js 第 2 行的版本號 +1（例如 v1 → v2），手機 App 才會更新。
+
+四、注意
+  專案是公開的，程式碼任何人都看得到；請款資料只存在各自的手機／電腦瀏覽器裡。
+  沒網路也能使用。
