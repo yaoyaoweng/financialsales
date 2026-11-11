@@ -111,10 +111,23 @@ details.settings[open]>summary{margin-bottom:14px}
 /* 業務版明細列 */
 #items{display:flex;flex-direction:column;gap:10px}
 .item{border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:8px;padding:12px 14px;background:#fcfaf6;
-  display:grid;grid-template-columns:28px 140px 140px minmax(200px,2.4fr) minmax(90px,1fr) minmax(130px,1.3fr) 100px auto;gap:8px;align-items:end}
+  display:grid;grid-template-columns:28px 136px 136px minmax(190px,2.4fr) 70px minmax(90px,1fr) minmax(120px,1.2fr) 90px auto;gap:8px;align-items:end}
 .item .idx{font-weight:700;color:var(--accent);align-self:center;text-align:center}
 .item .tools{display:flex;gap:0;align-self:center}
 .item .out{grid-column:2/-1;font-size:13px;color:var(--accent);min-height:1em;word-break:break-all}
+.lists3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:760px){.lists3{grid-template-columns:1fr}}
+.lists3 textarea{font-size:14px;line-height:1.7;resize:vertical}
+.cnt{font-weight:400;color:var(--muted)}
+.item select{width:100%;font:inherit;color:var(--fg);background:var(--inp);border:1px solid var(--line);border-radius:6px;padding:7px 6px}
+.item input.other{margin-top:6px}
+@media (min-width:1001px){
+  .item{grid-template-columns:28px 150px 150px minmax(200px,1fr) 110px;grid-template-areas:"idx d1 d2 course sess" "idx person type amt tools" "idx out out out out"}
+  .item .idx{grid-area:idx;align-self:start;margin-top:30px}
+  .item .f_d1{grid-area:d1}.item .f_d2{grid-area:d2}.item .f_course{grid-area:course}.item .f_sess{grid-area:sess}
+  .item .f_person{grid-area:person}.item .f_type{grid-area:type}.item .f_amt{grid-area:amt;max-width:160px}
+  .item .tools{grid-area:tools;justify-content:flex-end}.item .out{grid-area:out}
+}
 .chk{display:flex;align-items:center;gap:6px;margin:0;font-size:14px;color:var(--fg)}
 .chk input{width:auto}
 @media (max-width:1000px){
@@ -176,7 +189,7 @@ details.settings[open]>summary{margin-bottom:14px}
 </section>
 
 <section id="s2">
-  <h2><span class="n">2</span>明細<span class="sub">一筆一列；課程、同仁、費用類型打過一次就會出現在選單裡</span></h2>
+  <h2><span class="n">2</span>明細<span class="sub">一筆一列；課程、同仁從選單選，沒有的選「＋ 其他」輸入，會自動加進選單</span></h2>
   <div id="items"></div>
   <div class="row">
     <button id="add">＋ 新增一筆</button>
@@ -185,9 +198,10 @@ details.settings[open]>summary{margin-bottom:14px}
     <button class="link" id="demo">載入範例</button>
     <button class="link danger" id="clear">清空明細，開始新的一張</button>
   </div>
-  <datalist id="dl_course"></datalist><datalist id="dl_person"></datalist><datalist id="dl_type"></datalist>
+  
 </section>
 
+<datalist id="dl_sess"></datalist>
 <section id="s3">
   <h2><span class="n">3</span>檢查與預覽</h2>
   <div class="totals">
@@ -197,6 +211,19 @@ details.settings[open]>summary{margin-bottom:14px}
   </div>
   <div id="checks"></div>
   <div class="paperwrap"><div id="preview"></div></div>
+</section>
+
+<section id="s5" style="order:9">
+  <details class="settings" id="listBox">
+    <summary><span class="n">☰</span>選單管理（課程／活動、同仁、費用類型）</summary>
+    <div class="lists3">
+      <div><label for="ls_course">課程／活動名稱　<span class="cnt" id="lc_course"></span></label><textarea id="ls_course" rows="10" data-list="course"></textarea></div>
+      <div><label for="ls_person">同仁名單　<span class="cnt" id="lc_person"></span></label><textarea id="ls_person" rows="10" data-list="person" placeholder="一行一位，例如：&#10;王小明&#10;陳美玲"></textarea></div>
+      <div><label for="ls_type">費用類型　<span class="cnt" id="lc_type"></span></label><textarea id="ls_type" rows="10" data-list="type"></textarea></div>
+    </div>
+    <div class="note">一行一項，上下順序就是選單順序；用「# 」開頭的一行當分組標題（例如「# 2028 課程」）。可以從 Excel 或 LINE 整串貼上。名單只存在這台手機／電腦裡，換裝置時把文字框內容複製過去就好。明細裡選「＋ 其他」輸入的新項目，也會自動加到這裡。</div>
+    <div class="row"><button class="link" id="resetCourses">補回內建課程清單</button></div>
+  </details>
 </section>
 
 <section id="s4">
@@ -216,11 +243,40 @@ const LOGO_B64 = "iVBORw0KGgoAAAANSUhEUgAAAWgAAACJCAIAAACO6DURAAB0+0lEQVR42u29d3
 const KEY = "gs-sales-claim-v1";
 const DEF_HEAD = {date:"", summary:"花蓮同仁交通費補助(活動及課程)", dept:"花蓮", payee:"入個人薪資帳戶", bank:"", acct:"", pay:""};
 const DEF_TYPES = ["加油發票申請","火車來回車票","高鐵來回車票","客運來回車票","火車單程車票","停車費","住宿費"];
-const blank = () => ({d1:"",d2:"",course:"",person:"",type:"",amt:""});
+const blank = () => ({d1:"",d2:"",course:"",sess:"",person:"",type:"",amt:""});
 const todayS = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 
-let S = {head:{...DEF_HEAD,date:todayS()}, items:[blank()], mem:{course:[],person:[],type:[]}, sort:true, demo:false};
+// 2027 學習認證地圖＋業務活動；「# 」開頭是選單分組標題
+const LIST_VER = 2;
+const DEF_COURSES = ["# A 守護天使","O'CAMP迎星營","ESS銷售實戰班","ACE TEAM_S級",
+ "# B 退休專家","保單年檢","MDRT退休專班","MDRT退休專班進階班","退休金規劃實戰班","RFA退休理財規劃顧問師",
+ "# C 頂尖財顧","RFC認證財務顧問師","AFP理財規劃顧問","CFP國際認證高級理財規劃顧問","RFP美國註冊財務策劃師","千萬超業班","公勝財顧收費顧問認證培訓",
+ "# D 傳承高手","稅務高手8堂課","財富傳承24張保單","財傳大師班","家傳班起手式","家傳班實戰班","COT白金班","鉑金班","高資產客戶經營全攻略",
+ "# E 標竿領袖","EAM組織實戰班","ACE TEAM_R級","GMTC MDRT國際長培訓專案",
+ "# 業務活動","超級新星盃(澳門)","授證活動","業務表揚大會","MDRT day","日本四國","各區夏研","奧蘭多國際年會","MDRT鳳凰日暨極速達標榮譽宴","保險信望愛","摩納哥威尼斯","IFPA DAY","經管團隊集訓","年度策略會議",
+ "# 2026 課程","退休規劃實戰班","投資專班"];
+const DEF_SESS = ["D1","D2","D3","D4","D5","D6","-北一","-北二","-中區","-南區","-台中場","-補課"];
+let S = {head:{...DEF_HEAD,date:todayS()}, items:[blank()], mem:{course:[],person:[],type:[]}, lists:null, sort:true, demo:false};
 try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.head){ S={...S,...s}; S.head={...DEF_HEAD,...s.head}; S.mem={course:[],person:[],type:[],...(s.mem||{})}; } }catch(e){}
+if(!S.lists||!Array.isArray(S.lists.course)) { S.lists={course:[...DEF_COURSES],person:[...(S.mem.person||[])],type:[...new Set([...DEF_TYPES,...(S.mem.type||[])])]}; S.listVer=LIST_VER; }
+if(S.listVer!==LIST_VER){ // 舊版名單：換成新內建清單，原本自己加的課程保留在最後
+  const keep=S.lists.course.filter(x=>!x.startsWith("#")&&!DEF_COURSES.includes(x)&&!/^MDRT退休專班D\d$|^退休規劃實戰班-|老師投資專班$/.test(x));
+  S.lists.course=[...DEF_COURSES,...(keep.length?["# 自行新增",...keep]:[])]; S.listVer=LIST_VER;
+}
+const isHead=x=>String(x).startsWith("#");
+const items=k=>S.lists[k].filter(x=>!isHead(x));
+function optionsHTML(k,v,other){ // 有「# 標題」就分組
+  let h="", open=false;
+  for(const x of S.lists[k]){
+    if(isHead(x)){ if(open) h+="</optgroup>"; h+=`<optgroup label="${esc(x.replace(/^#\s*/,""))}">`; open=true; }
+    else h+=`<option${x===v&&!other?" selected":""}>${esc(x)}</option>`;
+  }
+  return open? h+"</optgroup>" : h;
+}
+const LISTS=["course","person","type"];
+function addToList(k,v){ v=String(v||"").trim(); if(!v||items(k).includes(v)) return false;
+  if(S.lists[k].some(isHead)&&!S.lists[k].includes("# 自行新增")) S.lists[k].push("# 自行新增");
+  S.lists[k].push(v); return true; }
 const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} };
 
 const $=id=>document.getElementById(id);
@@ -240,7 +296,7 @@ function dateLabel(a,b){
 // 說明欄格式：10/6 MDRT退休專班D2-(火車來回車票$1140)-王小明
 function desc(it){
   const parts=[];
-  const d=dateLabel(it.d1,it.d2), c=String(it.course||"").trim(), t=String(it.type||"").trim(), p=String(it.person||"").trim(), a=num(it.amt);
+  const d=dateLabel(it.d1,it.d2), c=(String(it.course||"").trim()+String(it.sess||"").trim()), t=String(it.type||"").trim(), p=String(it.person||"").trim(), a=num(it.amt);
   let s=[d,c].filter(Boolean).join(" ");
   if(t||a) s+=`-(${t}${a?"$"+Math.round(a):""})`;
   if(p) s+=`-${p}`;
@@ -307,14 +363,24 @@ for(const [id,k] of Object.entries(headIds)){ const el=$(id); const f=()=>{S.hea
 $("sortOn").checked=S.sort; $("sortOn").onchange=e=>{S.sort=e.target.checked; touch();};
 
 function itemHTML(it,i){
+  const sel=(k,lab)=>{
+    const L=items(k), v=String(it[k]||"").trim(), other=(v&&!L.includes(v))||it["_o"+k];
+    const empty = !L.length && k==="person" ? "先到下方「選單管理」新增同仁" : "請選擇";
+    return `<div class="f_${k}"><label for="i${i}_${k}">${lab}</label>
+      <select id="i${i}_${k}" data-i="${i}" data-sel="${k}"><option value="">${empty}</option>
+      ${optionsHTML(k,v,other)}
+      <option value="__other"${other?" selected":""}>＋ 其他（自行輸入）</option></select>
+      <input class="other" id="i${i}_${k}_o" data-i="${i}" data-k="${k}" data-other="1" value="${esc(other?v:"")}" placeholder="輸入新的${lab}，會加進選單"${other?"":" hidden"}></div>`;
+  };
   const f=(k,lab,attrs="")=>`<div class="f_${k}"><label for="i${i}_${k}">${lab}</label><input id="i${i}_${k}" data-i="${i}" data-k="${k}" value="${esc(it[k])}" ${attrs}></div>`;
   return `<div class="item" data-i="${i}">
     <div class="idx">${i+1}</div>
     <div class="f_d1"><label for="i${i}_d1">日期</label><input type="date" id="i${i}_d1" data-i="${i}" data-k="d1" value="${esc(it.d1)}"></div>
     <div class="f_d2"><label for="i${i}_d2">迄日（跨日才填）</label><input type="date" id="i${i}_d2" data-i="${i}" data-k="d2" value="${esc(it.d2)}"></div>
-    ${f("course","課程／活動名稱",'list="dl_course" placeholder="例：MDRT退休專班D1"')}
-    ${f("person","同仁",'list="dl_person"')}
-    ${f("type","費用類型",'list="dl_type" placeholder="例：火車來回車票"')}
+    ${sel("course","課程／活動名稱")}
+    <div class="f_sess"><label for="i${i}_sess">場次／天</label><input id="i${i}_sess" data-i="${i}" data-k="sess" value="${esc(it.sess)}" list="dl_sess" placeholder="D1"></div>
+    ${sel("person","同仁")}
+    ${sel("type","費用類型")}
     ${f("amt","金額",'class="num" inputmode="numeric"')}
     <div class="tools">
       <button class="link" data-act="dup" data-i="${i}" title="複製這一筆" aria-label="複製第${i+1}筆">複製</button>
@@ -325,20 +391,34 @@ function itemHTML(it,i){
   </div>`;
 }
 function renderItems(){ $("items").innerHTML=S.items.map(itemHTML).join(""); renderLists(); updateOuts(); }
-function renderLists(){
-  const uniq=a=>[...new Set(a.map(x=>String(x).trim()).filter(Boolean))];
-  const lists={course:uniq([...S.items.map(i=>i.course),...S.mem.course]),person:uniq([...S.items.map(i=>i.person),...S.mem.person]),type:uniq([...S.items.map(i=>i.type),...S.mem.type,...DEF_TYPES])};
-  for(const k of ["course","person","type"]) $("dl_"+k).innerHTML=lists[k].map(v=>`<option value="${esc(v)}">`).join("");
+function renderLists(){ // 選單管理的文字框與計數
+  for(const k of LISTS){ const ta=$("ls_"+k); if(ta&&document.activeElement!==ta) ta.value=S.lists[k].join("\n"); const c=$("lc_"+k); if(c) c.textContent=`${items(k).length} 項`; }
 }
-function remember(){ // 把用過的課程、同仁、費用類型記起來（最多各 60 筆）
-  for(const k of ["course","person","type"]){
-    const cur=S.items.map(i=>String(i[k]||"").trim()).filter(Boolean);
-    S.mem[k]=[...new Set([...cur,...S.mem[k]])].slice(0,60);
-  }
+function refreshSelects(){ // 名單改了：只更新選項，不重畫整列（避免打斷正在點的欄位）
+  document.querySelectorAll("#items select[data-sel]").forEach(sel=>{
+    const i=+sel.dataset.i, k=sel.dataset.sel, it=S.items[i], L=items(k), v=String(it[k]||"").trim();
+    const other=(v&&!L.includes(v))||it["_o"+k];
+    const empty=!L.length&&k==="person"?"先到下方「選單管理」新增同仁":"請選擇";
+    sel.innerHTML=`<option value="">${empty}</option>${optionsHTML(k,v,other)}<option value="__other">＋ 其他（自行輸入）</option>`;
+    sel.value= other? "__other" : v;
+    const o=$(`i${i}_${k}_o`); if(o){ o.hidden=!other; if(!other) o.value=""; }
+  });
+}
+function remember(){ // 自行輸入的新項目加進選單
+  let added=false;
+  for(const it of S.items) for(const k of LISTS){ if(it["_o"+k]&&has(it[k])){ if(addToList(k,it[k])) added=true; delete it["_o"+k]; } }
+  return added;
 }
 function updateOuts(){ S.items.forEach((it,i)=>{ const o=$("o"+i); if(o) o.textContent = filled(it)? "→ "+desc(it) : ""; }); }
 $("items").addEventListener("input",e=>{ const el=e.target,k=el.dataset.k; if(!k) return; S.items[+el.dataset.i][k]=el.value; touch(); });
-$("items").addEventListener("change",e=>{ if(e.target.dataset.k){ remember(); renderLists(); save(); } });
+$("items").addEventListener("change",e=>{
+  const el=e.target;
+  if(el.dataset.sel){ const i=+el.dataset.i, k=el.dataset.sel;
+    if(el.value==="__other"){ S.items[i]["_o"+k]=true; S.items[i][k]=""; renderItems(); touch(); const o=$(`i${i}_${k}_o`); if(o) o.focus(); return; }
+    delete S.items[i]["_o"+k]; S.items[i][k]=el.value; touch(); return; }
+  if(el.dataset.other){ if(remember()){ renderItems(); } touch(); return; }
+  if(el.dataset.k) save();
+});
 $("items").addEventListener("click",e=>{
   const b=e.target.closest("button[data-act]"); if(!b) return; const i=+b.dataset.i, a=b.dataset.act;
   if(a==="del"){ S.items.splice(i,1); if(!S.items.length) S.items.push(blank()); }
@@ -349,16 +429,24 @@ $("items").addEventListener("click",e=>{
 });
 $("add").onclick=()=>{ const p=S.items[S.items.length-1]; const n=blank(); if(p&&filled(p)){ n.d1=p.d1; n.course=p.course; n.person=p.person; n.type=p.type; }
   S.items.push(n); renderItems(); touch(); $(`i${S.items.length-1}_amt`).focus(); };
+document.querySelectorAll("textarea[data-list]").forEach(ta=>{
+  ta.addEventListener("input",()=>{ const k=ta.dataset.list; S.lists[k]=[...new Set(ta.value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean))]; $("lc_"+k).textContent=`${items(k).length} 項`; save(); });
+  ta.addEventListener("change",()=>{ refreshSelects(); touch(); });
+});
+$("resetCourses").onclick=()=>{ const extra=items("course").filter(x=>!DEF_COURSES.includes(x)); S.lists.course=[...DEF_COURSES,...(extra.length?["# 自行新增",...extra]:[])]; renderLists(); refreshSelects(); touch(); };
+if(!S.lists.person.length) $("listBox").open=true;
 let arm=0;
 $("clear").onclick=()=>{ const b=$("clear");
   if(!arm){ arm=1; b.textContent="再按一次確認清空（抬頭資料會保留）"; setTimeout(()=>{arm=0;b.textContent="清空明細，開始新的一張";},4000); return; }
   arm=0; b.textContent="清空明細，開始新的一張"; remember(); S.items=[blank()]; S.demo=false; renderItems(); touch(); };
 $("demo").onclick=()=>{
-  const I=(d1,d2,course,person,type,amt)=>({d1,d2,course,person,type,amt:String(amt)});
-  S.items=[I("2026-09-22","","退休規劃實戰班-中壢補課","王小明","加油發票申請",1327),I("2026-10-05","","MDRT退休專班D1","王小明","加油發票申請",1265),
-    I("2026-10-06","","MDRT退休專班D2","王小明","火車來回車票",1140),I("2026-10-13","","MDRT退休專班D3","王小明","火車來回車票",1140),
-    I("2026-10-14","","MDRT退休專班D4","王小明","火車來回車票",1140),I("2026-10-20","","退休規劃實戰班-台中場","王小明","加油發票申請",2650),
+  const I=(d1,d2,course,person,type,amt,sess="")=>({d1,d2,course,sess,person,type,amt:String(amt)});
+  S.items=[I("2026-09-22","","退休規劃實戰班","王小明","加油發票申請",1327,"-中壢補課"),I("2026-10-05","","MDRT退休專班","王小明","加油發票申請",1265,"D1"),
+    I("2026-10-06","","MDRT退休專班","王小明","火車來回車票",1140,"D2"),I("2026-10-13","","MDRT退休專班","王小明","火車來回車票",1140,"D3"),
+    I("2026-10-14","","MDRT退休專班","王小明","火車來回車票",1140,"D4"),I("2026-10-20","","退休規劃實戰班","王小明","加油發票申請",2650,"-台中場"),
     I("2026-09-17","2026-09-18","投資專班","陳美玲","來回車票",566)];
+  if(!items("person").length){ addToList("person","王小明"); addToList("person","陳美玲"); }
+  addToList("type","來回車票");
   S.head.date="2026-10-27"; S.demo=true; bindHead(); renderItems(); touch(); };
 
 function fitPaper(){ const p=$("preview").firstElementChild; if(!p) return; p.style.zoom=1;
@@ -376,7 +464,7 @@ function renderPreview(){
     if(!r.a) w.push(`第 ${r.n} 筆金額是 0 或沒填`);
     if(has(r.d2)&&has(r.d1)&&r.d2<r.d1) w.push(`第 ${r.n} 筆迄日早於起日`);
   });
-  const seen={}; c.rows.forEach(r=>{ const k=[r.d1,r.course,r.person,r.type].join("|"); if(seen[k]) w.push(`第 ${seen[k]} 筆和第 ${r.n} 筆的日期、課程、同仁、類型都一樣，確認是不是重複`); else seen[k]=r.n; });
+  const seen={}; c.rows.forEach(r=>{ const k=[r.d1,r.course,r.sess,r.person,r.type].join("|"); if(seen[k]) w.push(`第 ${seen[k]} 筆和第 ${r.n} 筆的日期、課程、同仁、類型都一樣，確認是不是重複`); else seen[k]=r.n; });
   if(!c.rows.length) w.push("還沒有明細");
   if(c.rows.length>18) w.push(`共 ${c.rows.length} 筆，可能會超過一頁`);
   $("checks").innerHTML = w.length? `<div class="msg warn">請確認：<ul>${w.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`
@@ -477,6 +565,7 @@ async function doSave(kind){
 }
 $("dlDocx").onclick=()=>doSave("docx"); $("dlHtml").onclick=()=>doSave("html");
 
+$("dl_sess").innerHTML=DEF_SESS.map(v=>`<option value="${esc(v)}">`).join("");
 bindHead(); renderItems(); renderPreview();
 </script>
 <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>

@@ -1,5 +1,5 @@
 // 離線快取：改版時把版本號 +1，使用者下次開啟就會更新
-const CACHE = "sales-claim-v1";
+const CACHE = "sales-claim-v3";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./jszip.min.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-64.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
